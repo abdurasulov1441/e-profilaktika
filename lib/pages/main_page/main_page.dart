@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
-import 'package:go_router/go_router.dart';
 import 'package:profilaktika/app/router.dart';
+import 'package:profilaktika/app/theme.dart';
 import 'package:profilaktika/common/helpers/request_helper.dart';
 import 'package:profilaktika/common/style/app_style.dart';
+import 'package:profilaktika/common/utils/constants.dart';
 import 'package:profilaktika/db/cache.dart';
 
 class MainPage extends StatefulWidget {
@@ -19,6 +20,9 @@ class _MainPageState extends State<MainPage> {
         await requestHelper.getWithAuth('/api/v1/lectures/', log: true);
 
     final List<dynamic> lectures = response['data'];
+    if (response['statusCode'] != 200) {
+      router.go(Routes.loginPage);
+    }
 
     return groupLecturesByMonth(lectures);
   }
@@ -59,14 +63,12 @@ class _MainPageState extends State<MainPage> {
   }
 
   void _showEditDialog(Map<String, dynamic> lecture) {
-    // Проверяем наличие данных или устанавливаем значения по умолчанию
     String lecturer = lecture['lecturer'] ?? '';
     int number = lecture['number'] ?? 0;
     String topic = lecture['topic'] ?? '';
     String text = lecture['text'] ?? '';
     String date = lecture['date'] ?? '';
 
-    // Создаем контроллеры для каждого поля
     TextEditingController lecturerController =
         TextEditingController(text: lecturer);
     TextEditingController numberController =
@@ -85,25 +87,72 @@ class _MainPageState extends State<MainPage> {
             children: [
               TextField(
                 controller: lecturerController,
-                decoration: InputDecoration(labelText: "Ma'ruza o'qituvchisi"),
+                decoration: InputDecoration(
+                    focusedBorder: OutlineInputBorder(
+                      borderSide: BorderSide(color: MyColors.primary),
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderSide: BorderSide(color: Colors.grey),
+                    ),
+                    labelText: "Ma'ruzachi"),
+              ),
+              SizedBox(
+                height: 10,
               ),
               TextField(
                 controller: numberController,
-                decoration: InputDecoration(labelText: "Raqami"),
+                decoration: InputDecoration(
+                    focusedBorder: OutlineInputBorder(
+                      borderSide: BorderSide(color: MyColors.primary),
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderSide: BorderSide(color: Colors.grey),
+                    ),
+                    labelText: "Raqami"),
                 keyboardType: TextInputType.number,
+              ),
+              SizedBox(
+                height: 10,
               ),
               TextField(
                 controller: topicController,
-                decoration: InputDecoration(labelText: "Mavzu"),
+                decoration: InputDecoration(
+                    focusedBorder: OutlineInputBorder(
+                      borderSide: BorderSide(color: MyColors.primary),
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderSide: BorderSide(color: Colors.grey),
+                    ),
+                    labelText: "Mavzu"),
+              ),
+              SizedBox(
+                height: 10,
               ),
               TextField(
                 controller: textController,
-                decoration: InputDecoration(labelText: "Matn"),
+                decoration: InputDecoration(
+                    focusedBorder: OutlineInputBorder(
+                      borderSide: BorderSide(color: MyColors.primary),
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderSide: BorderSide(color: Colors.grey),
+                    ),
+                    labelText: "Matn"),
                 maxLines: 10,
+              ),
+              SizedBox(
+                height: 10,
               ),
               TextField(
                 controller: dateController,
-                decoration: InputDecoration(labelText: "Sana (YYYY-MM-DD)"),
+                decoration: InputDecoration(
+                    focusedBorder: OutlineInputBorder(
+                      borderSide: BorderSide(color: MyColors.primary),
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderSide: BorderSide(color: Colors.grey),
+                    ),
+                    labelText: "Sana (YYYY-MM-DD)"),
                 keyboardType: TextInputType.datetime,
               ),
             ],
@@ -164,6 +213,11 @@ class _MainPageState extends State<MainPage> {
             child: Text("Bekor qilish"),
           ),
           ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
+            ),
             onPressed: () {
               requestHelper
                   .deleteWithAuth('/api/v1/lectures/$id')
@@ -196,6 +250,21 @@ class _MainPageState extends State<MainPage> {
             Text(structure!),
             Spacer(),
             Text('Salom, $user $lastname'),
+            SizedBox(
+              width: 10,
+            ),
+            CircleAvatar(
+              radius: 20,
+              backgroundColor: Colors.grey.shade200,
+              child: ClipOval(
+                child: Image.network(
+                  '${Constants.imageUrl}${cache.getString('photo')}',
+                  fit: BoxFit.cover,
+                  width: 40,
+                  height: 40,
+                ),
+              ),
+            ),
           ],
         ),
         actions: [
@@ -253,22 +322,23 @@ class _MainPageState extends State<MainPage> {
                     ),
                   ),
                   Column(
-                    crossAxisAlignment: CrossAxisAlignment.center,
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: data.entries.map((entry) {
                       return Column(
-                        crossAxisAlignment: CrossAxisAlignment.center,
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(
-                            entry.key,
-                            style: AppStyle.fontStyle.copyWith(
-                              fontSize: 20,
-                              fontWeight: FontWeight.bold,
+                          if (entry.value.isNotEmpty)
+                            Text(
+                              entry.key,
+                              style: AppStyle.fontStyle.copyWith(
+                                fontSize: 20,
+                                fontWeight: FontWeight.bold,
+                              ),
                             ),
-                          ),
                           SizedBox(height: 10),
                           if (entry.value.isEmpty)
                             Text(
-                              "Ma'lumot yo'q",
+                              "",
                               style: AppStyle.fontStyle.copyWith(
                                 fontSize: 14,
                                 fontStyle: FontStyle.italic,
@@ -276,130 +346,136 @@ class _MainPageState extends State<MainPage> {
                               ),
                             )
                           else
-                            Center(
-                              child: Wrap(
-                                spacing: 20,
-                                runSpacing: 20,
-                                children: entry.value.map((lecture) {
-                                  return GestureDetector(
-                                    onTap: () {
-                                      router.push(
-                                        Routes.quizPage,
-                                        extra: lecture['id'],
-                                      );
-                                    },
-                                    child: Container(
-                                      width: 320,
-                                      height: 100,
-                                      padding: EdgeInsets.symmetric(
-                                          horizontal: 15, vertical: 10),
-                                      decoration: BoxDecoration(
-                                        borderRadius: BorderRadius.circular(12),
-                                        color: Colors.white,
-                                        boxShadow: [
-                                          BoxShadow(
-                                            color:
-                                                Colors.black.withOpacity(0.1),
-                                            spreadRadius: 2,
-                                            blurRadius: 6,
-                                            offset: Offset(0, 3),
-                                          ),
-                                        ],
-                                      ),
-                                      child: Row(
-                                        children: [
-                                          Container(
-                                            width: 40,
-                                            height: 40,
-                                            decoration: BoxDecoration(
-                                              color: Colors.grey.shade200,
-                                              shape: BoxShape.circle,
+                            Row(
+                              children: [
+                                Wrap(
+                                  spacing: 20,
+                                  runSpacing: 20,
+                                  children: entry.value.map((lecture) {
+                                    return GestureDetector(
+                                      onTap: () {
+                                        router.push(
+                                          Routes.quizPage,
+                                          extra: lecture['id'],
+                                        );
+                                      },
+                                      child: Container(
+                                        width: 320,
+                                        height: 100,
+                                        padding: EdgeInsets.symmetric(
+                                            horizontal: 15, vertical: 10),
+                                        decoration: BoxDecoration(
+                                          borderRadius:
+                                              BorderRadius.circular(12),
+                                          color: Colors.white,
+                                          boxShadow: [
+                                            BoxShadow(
+                                              color:
+                                                  Colors.black.withOpacity(0.1),
+                                              spreadRadius: 2,
+                                              blurRadius: 6,
+                                              offset: Offset(0, 3),
                                             ),
-                                            child: Center(
-                                              child: Text(
-                                                lecture['number'].toString(),
-                                                style:
-                                                    AppStyle.fontStyle.copyWith(
-                                                  fontSize: 16,
-                                                  fontWeight: FontWeight.bold,
-                                                ),
+                                          ],
+                                        ),
+                                        child: Row(
+                                          children: [
+                                            Container(
+                                              width: 40,
+                                              height: 40,
+                                              decoration: BoxDecoration(
+                                                color: Colors.grey.shade200,
+                                                shape: BoxShape.circle,
                                               ),
-                                            ),
-                                          ),
-                                          SizedBox(width: 10),
-                                          Expanded(
-                                            child: Column(
-                                              crossAxisAlignment:
-                                                  CrossAxisAlignment.start,
-                                              mainAxisAlignment:
-                                                  MainAxisAlignment.center,
-                                              children: [
-                                                Text(
-                                                  lecture['topic'],
+                                              child: Center(
+                                                child: Text(
+                                                  lecture['number'].toString(),
                                                   style: AppStyle.fontStyle
                                                       .copyWith(
-                                                    fontSize: 14,
+                                                    fontSize: 16,
                                                     fontWeight: FontWeight.bold,
                                                   ),
-                                                  maxLines: 1,
-                                                  overflow:
-                                                      TextOverflow.ellipsis,
-                                                ),
-                                                SizedBox(height: 4),
-                                                Text(
-                                                  lecture['lecturer'],
-                                                  style: AppStyle.fontStyle
-                                                      .copyWith(
-                                                    fontSize: 12,
-                                                    color: Colors.grey.shade600,
-                                                  ),
-                                                  maxLines: 1,
-                                                  overflow:
-                                                      TextOverflow.ellipsis,
-                                                ),
-                                              ],
-                                            ),
-                                          ),
-                                          Column(
-                                            mainAxisAlignment:
-                                                MainAxisAlignment.spaceBetween,
-                                            children: [
-                                              Text(
-                                                lecture['date']
-                                                    .substring(0, 10),
-                                                style:
-                                                    AppStyle.fontStyle.copyWith(
-                                                  fontSize: 12,
-                                                  color: Colors.grey.shade700,
                                                 ),
                                               ),
-                                              Row(
+                                            ),
+                                            SizedBox(width: 10),
+                                            Expanded(
+                                              child: Column(
+                                                crossAxisAlignment:
+                                                    CrossAxisAlignment.start,
+                                                mainAxisAlignment:
+                                                    MainAxisAlignment.center,
                                                 children: [
-                                                  IconButton(
-                                                    icon: SvgPicture.asset(
-                                                        'assets/icons/edit.svg'),
-                                                    onPressed: () =>
-                                                        _showEditDialog(
-                                                            lecture),
+                                                  Text(
+                                                    lecture['topic'],
+                                                    style: AppStyle.fontStyle
+                                                        .copyWith(
+                                                      fontSize: 14,
+                                                      fontWeight:
+                                                          FontWeight.bold,
+                                                    ),
+                                                    maxLines: 1,
+                                                    overflow:
+                                                        TextOverflow.ellipsis,
                                                   ),
-                                                  IconButton(
-                                                    icon: SvgPicture.asset(
-                                                        'assets/icons/delete.svg'),
-                                                    onPressed: () =>
-                                                        _showDeleteConfirmationDialog(
-                                                            lecture['id']
-                                                                .toString()),
+                                                  SizedBox(height: 4),
+                                                  Text(
+                                                    lecture['lecturer'],
+                                                    style: AppStyle.fontStyle
+                                                        .copyWith(
+                                                      fontSize: 12,
+                                                      color:
+                                                          Colors.grey.shade600,
+                                                    ),
+                                                    maxLines: 1,
+                                                    overflow:
+                                                        TextOverflow.ellipsis,
                                                   ),
                                                 ],
                                               ),
-                                            ],
-                                          ),
-                                        ],
+                                            ),
+                                            Column(
+                                              mainAxisAlignment:
+                                                  MainAxisAlignment
+                                                      .spaceBetween,
+                                              children: [
+                                                Text(
+                                                  lecture['date']
+                                                      .substring(0, 10),
+                                                  style: AppStyle.fontStyle
+                                                      .copyWith(
+                                                    fontSize: 12,
+                                                    color: Colors.grey.shade700,
+                                                  ),
+                                                ),
+                                                Row(
+                                                  children: [
+                                                    IconButton(
+                                                      icon: SvgPicture.asset(
+                                                          'assets/icons/edit.svg'),
+                                                      onPressed: () =>
+                                                          _showEditDialog(
+                                                              lecture),
+                                                    ),
+                                                    IconButton(
+                                                      icon: SvgPicture.asset(
+                                                          'assets/icons/delete.svg'),
+                                                      onPressed: () =>
+                                                          _showDeleteConfirmationDialog(
+                                                              lecture['id']
+                                                                  .toString()),
+                                                    ),
+                                                  ],
+                                                ),
+                                              ],
+                                            ),
+                                          ],
+                                        ),
                                       ),
-                                    ),
-                                  );
-                                }).toList(),
-                              ),
+                                    );
+                                  }).toList(),
+                                ),
+                              ],
                             ),
                           SizedBox(height: 20),
                         ],

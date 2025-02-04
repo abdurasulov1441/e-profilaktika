@@ -96,6 +96,7 @@ final class RequestHelper {
         print(response.data);
 
         await refreshAccessToken();
+        router.go(Routes.loginPage);
         return getWithAuth(path);
       }
       if (log) {

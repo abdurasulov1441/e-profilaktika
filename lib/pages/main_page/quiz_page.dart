@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:profilaktika/app/router.dart';
+import 'package:profilaktika/app/theme.dart';
 import 'package:profilaktika/common/helpers/request_helper.dart';
 
 class QuizPage extends StatefulWidget {
@@ -73,23 +74,47 @@ class _QuizPageState extends State<QuizPage> {
               children: [
                 TextField(
                   controller: questionTextController,
-                  decoration: const InputDecoration(labelText: 'Savol matni'),
+                  decoration: const InputDecoration(
+                      focusedBorder: OutlineInputBorder(
+                        borderSide: BorderSide(color: MyColors.primary),
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderSide: BorderSide(color: Colors.grey),
+                      ),
+                      labelText: 'Savol matni'),
                 ),
                 const SizedBox(height: 8),
                 TextField(
                   controller: descriptionController,
-                  decoration: const InputDecoration(labelText: 'Savol izohi'),
+                  decoration: const InputDecoration(
+                      focusedBorder: OutlineInputBorder(
+                        borderSide: BorderSide(color: MyColors.primary),
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderSide: BorderSide(color: Colors.grey),
+                      ),
+                      labelText: 'To\'gri javob izohi'),
                 ),
                 const SizedBox(height: 8),
                 ...answerControllers.asMap().entries.map((entry) {
                   final index = entry.key;
                   final controller = entry.value;
-                  return TextField(
-                    controller: controller,
-                    decoration: InputDecoration(
-                      labelText: index == 0
-                          ? 'To‘g‘ri javob'
-                          : 'Noto‘g‘ri javob ${index}',
+                  return Padding(
+                    padding:
+                        const EdgeInsets.symmetric(vertical: 5, horizontal: 0),
+                    child: TextField(
+                      controller: controller,
+                      decoration: InputDecoration(
+                        focusedBorder: OutlineInputBorder(
+                          borderSide: BorderSide(color: MyColors.primary),
+                        ),
+                        enabledBorder: OutlineInputBorder(
+                          borderSide: BorderSide(color: Colors.grey),
+                        ),
+                        labelText: index == 0
+                            ? 'To‘g‘ri javob'
+                            : 'Noto‘g‘ri javob ${index}',
+                      ),
                     ),
                   );
                 }).toList(),
@@ -102,6 +127,11 @@ class _QuizPageState extends State<QuizPage> {
               child: const Text('Bekor qilish'),
             ),
             ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+              ),
               onPressed: () async {
                 final updatedQuestion = {
                   "lecture_id": question['lecture_id'],
@@ -113,8 +143,7 @@ class _QuizPageState extends State<QuizPage> {
                       .map((entry) => {
                             "id": question['answers'][entry.key]['id'],
                             "text": entry.value.text,
-                            "is_correct":
-                                entry.key == 0, // Первый ответ правильный
+                            "is_correct": entry.key == 0,
                           })
                       .toList(),
                 };
@@ -128,12 +157,11 @@ class _QuizPageState extends State<QuizPage> {
                   final index =
                       _questions.indexWhere((q) => q['id'] == question['id']);
                   if (index != -1) {
-                    _questions[index] =
-                        response['question']; // Обновляем локальный список
+                    _questions[index] = response['question'];
                   }
                 });
 
-                Navigator.pop(context); // Закрываем диалог
+                Navigator.pop(context);
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(
                       content: Text('Savol muvaffaqiyatli yangilandi')),
