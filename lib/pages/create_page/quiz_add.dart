@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
+import 'package:profilaktika/app/theme.dart';
 import 'package:profilaktika/common/helpers/request_helper.dart';
+import 'package:profilaktika/common/style/app_style.dart';
 
 class QuizzAddPage extends StatefulWidget {
   final lectureId;
@@ -63,7 +66,7 @@ class _QuizzAddPageState extends State<QuizzAddPage> {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text("Testlar muvaffaqiyatli yuborildi!")),
       );
-      context.pop();
+      context.pop('added');
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text("Xatolik yuz berdi: $e")),
@@ -75,6 +78,8 @@ class _QuizzAddPageState extends State<QuizzAddPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+        backgroundColor: MyColors.cardLight,
+        centerTitle: true,
         title: const Text('Testni tuzish'),
       ),
       body: Padding(
@@ -99,6 +104,7 @@ class _QuizzAddPageState extends State<QuizzAddPage> {
                     children: [
                       QuestionWidget(
                         key: _questions[index],
+                        questionNumber: index + 1,
                         onRemove: () => _removeQuestion(_questions[index]),
                         onUpdate: (data) =>
                             _updateQuestionData(_questions[index], data),
@@ -110,24 +116,41 @@ class _QuizzAddPageState extends State<QuizzAddPage> {
               ),
             ),
             Center(
-              child: ElevatedButton.icon(
-                onPressed: _addQuestion,
-                icon: const Icon(Icons.add),
-                label: const Text('Yangi test qo’shish'),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.blueGrey[900],
+              child: Container(
+                width: 200,
+                child: ElevatedButton(
+                  onPressed: _addQuestion,
+                  child: Text(
+                    'Yangi test qo’shish',
+                    style: AppStyle.fontStyle.copyWith(color: Colors.white),
+                  ),
+                  style: ElevatedButton.styleFrom(
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    backgroundColor: MyColors.primary,
+                  ),
                 ),
               ),
             ),
             const SizedBox(height: 24),
             Center(
-              child: ElevatedButton(
-                onPressed: _submitQuiz,
-                child: const Text('Yakunlash'),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.green[600],
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 32, vertical: 12),
+              child: Container(
+                width: 400,
+                child: ElevatedButton(
+                  onPressed: _submitQuiz,
+                  child: Text(
+                    'Yakunlash',
+                    style: AppStyle.fontStyle.copyWith(color: Colors.white),
+                  ),
+                  style: ElevatedButton.styleFrom(
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    backgroundColor: MyColors.primary,
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 32, vertical: 12),
+                  ),
                 ),
               ),
             ),
@@ -139,11 +162,16 @@ class _QuizzAddPageState extends State<QuizzAddPage> {
 }
 
 class QuestionWidget extends StatefulWidget {
+  final int questionNumber;
   final VoidCallback onRemove;
   final ValueChanged<Map<String, dynamic>> onUpdate;
 
-  const QuestionWidget(
-      {super.key, required this.onRemove, required this.onUpdate});
+  const QuestionWidget({
+    super.key,
+    required this.onRemove,
+    required this.onUpdate,
+    required this.questionNumber,
+  });
 
   @override
   State<QuestionWidget> createState() => _QuestionWidgetState();
@@ -181,11 +209,12 @@ class _QuestionWidgetState extends State<QuestionWidget> {
   @override
   Widget build(BuildContext context) {
     return Container(
+      width: 600,
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         border: Border.all(color: Colors.grey[300]!),
         borderRadius: BorderRadius.circular(8),
-        color: Colors.grey[100],
+        color: MyColors.cardLight,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -194,37 +223,74 @@ class _QuestionWidgetState extends State<QuestionWidget> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                'Savolni yozish',
-                style: TextStyle(
-                  fontSize: 16,
+                '${widget.questionNumber} - testni tuzish',
+                style: AppStyle.fontStyle.copyWith(
+                  fontSize: 18,
                   fontWeight: FontWeight.bold,
-                  color: Colors.blueGrey[900],
                 ),
               ),
-              IconButton(
-                onPressed: widget.onRemove,
-                icon: const Icon(Icons.delete, color: Colors.red),
+              SizedBox(
+                height: 40,
+                child: ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      side: BorderSide(color: Colors.grey[300]!, width: 1),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                    ),
+                    onPressed: widget.onRemove,
+                    child: Row(
+                      children: [
+                        SvgPicture.asset(
+                          'assets/icons/delete.svg',
+                          width: 30,
+                          height: 30,
+                        ),
+                        SizedBox(
+                          width: 10,
+                        ),
+                        Text('O\'chirish',
+                            style: AppStyle.fontStyle.copyWith(
+                                color: Colors.red[900]!,
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold)),
+                      ],
+                    )),
               ),
             ],
           ),
           const SizedBox(height: 8),
           TextField(
+            style: AppStyle.fontStyle,
             controller: _questionController,
             onChanged: (_) => _notifyParent(),
             decoration: InputDecoration(
+              labelStyle: AppStyle.fontStyle,
               labelText: 'Savol',
+              enabledBorder: OutlineInputBorder(
+                borderSide: BorderSide(color: Colors.grey[300]!),
+                borderRadius: BorderRadius.circular(8),
+              ),
               border: OutlineInputBorder(
+                borderSide: BorderSide(color: Colors.grey[300]!),
                 borderRadius: BorderRadius.circular(8),
               ),
             ),
           ),
           const SizedBox(height: 8),
           TextField(
+            style: AppStyle.fontStyle,
             controller: _descriptionController,
             onChanged: (_) => _notifyParent(),
             decoration: InputDecoration(
+              labelStyle: AppStyle.fontStyle,
               labelText: 'Savol izohi',
+              enabledBorder: OutlineInputBorder(
+                borderSide: BorderSide(color: Colors.grey[300]!),
+                borderRadius: BorderRadius.circular(8),
+              ),
               border: OutlineInputBorder(
+                borderSide: BorderSide(color: Colors.grey[300]!),
                 borderRadius: BorderRadius.circular(8),
               ),
             ),
@@ -234,11 +300,18 @@ class _QuestionWidgetState extends State<QuestionWidget> {
             return Padding(
               padding: const EdgeInsets.only(bottom: 8.0),
               child: TextField(
+                style: AppStyle.fontStyle,
                 controller: _answerControllers[index],
                 onChanged: (_) => _notifyParent(),
                 decoration: InputDecoration(
+                  labelStyle: AppStyle.fontStyle,
                   labelText: index == 3 ? 'To’g’ri javob' : 'Noto’g’ri javob',
+                  enabledBorder: OutlineInputBorder(
+                    borderSide: BorderSide(color: Colors.grey[300]!),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
                   border: OutlineInputBorder(
+                    borderSide: BorderSide(color: Colors.grey[300]!),
                     borderRadius: BorderRadius.circular(8),
                   ),
                 ),

@@ -151,12 +151,21 @@ class _QuizPageState extends State<QuizPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+        centerTitle: true,
         title: const Text('Savollar'),
         actions: [
           IconButton(
             icon: const Icon(Icons.add),
-            onPressed: () {
-              context.push(Routes.quizAddPage, extra: widget.lectureId);
+            onPressed: () async {
+              final result = await context.push<String>(Routes.quizAddPage,
+                  extra: widget.lectureId);
+
+              if (result == 'added') {
+                setState(() {
+                  _questionsFuture =
+                      fetchQuestionsByLectureId(widget.lectureId);
+                });
+              }
             },
           ),
         ],
@@ -186,7 +195,8 @@ class _QuizPageState extends State<QuizPage> {
               final answers = question['answers'] as List<dynamic>;
 
               return Card(
-                margin: const EdgeInsets.only(bottom: 16.0),
+                margin: const EdgeInsets.only(
+                    bottom: 16.0, left: 308.0, right: 308.0),
                 elevation: 4,
                 child: Padding(
                   padding: const EdgeInsets.all(16.0),
@@ -200,11 +210,6 @@ class _QuizPageState extends State<QuizPage> {
                           fontWeight: FontWeight.bold,
                         ),
                       ),
-                      const SizedBox(height: 8),
-                      Text(
-                        'Izoh: ${question['description']}',
-                        style: const TextStyle(fontSize: 14),
-                      ),
                       const SizedBox(height: 12),
                       Text(
                         'Javoblar:',
@@ -212,6 +217,11 @@ class _QuizPageState extends State<QuizPage> {
                           fontSize: 14,
                           fontWeight: FontWeight.bold,
                         ),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        'Izoh: ${question['description']}',
+                        style: const TextStyle(fontSize: 14),
                       ),
                       const SizedBox(height: 8),
                       ...answers.map((answer) {
@@ -242,12 +252,24 @@ class _QuizPageState extends State<QuizPage> {
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
                           ElevatedButton(
+                            style: ElevatedButton.styleFrom(
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              side: BorderSide(color: Colors.grey.shade300),
+                            ),
                             onPressed: () async {
                               await deleteQuestion(question['id']);
                             },
                             child: const Text('O‘chirish'),
                           ),
                           ElevatedButton(
+                            style: ElevatedButton.styleFrom(
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              side: BorderSide(color: Colors.grey.shade300),
+                            ),
                             onPressed: () => updateQuestion(context, question),
                             child: const Text('Tahrirlash'),
                           ),

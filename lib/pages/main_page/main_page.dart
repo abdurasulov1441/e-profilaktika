@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
+import 'package:go_router/go_router.dart';
 import 'package:profilaktika/app/router.dart';
 import 'package:profilaktika/common/helpers/request_helper.dart';
 import 'package:profilaktika/common/style/app_style.dart';
@@ -56,6 +58,127 @@ class _MainPageState extends State<MainPage> {
     return months[month - 1];
   }
 
+  void _showEditDialog(Map<String, dynamic> lecture) {
+    // Проверяем наличие данных или устанавливаем значения по умолчанию
+    String lecturer = lecture['lecturer'] ?? '';
+    int number = lecture['number'] ?? 0;
+    String topic = lecture['topic'] ?? '';
+    String text = lecture['text'] ?? '';
+    String date = lecture['date'] ?? '';
+
+    // Создаем контроллеры для каждого поля
+    TextEditingController lecturerController =
+        TextEditingController(text: lecturer);
+    TextEditingController numberController =
+        TextEditingController(text: number.toString());
+    TextEditingController topicController = TextEditingController(text: topic);
+    TextEditingController textController = TextEditingController(text: text);
+    TextEditingController dateController = TextEditingController(text: date);
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text("Ma'ruzani tahrirlash"),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                controller: lecturerController,
+                decoration: InputDecoration(labelText: "Ma'ruza o'qituvchisi"),
+              ),
+              TextField(
+                controller: numberController,
+                decoration: InputDecoration(labelText: "Raqami"),
+                keyboardType: TextInputType.number,
+              ),
+              TextField(
+                controller: topicController,
+                decoration: InputDecoration(labelText: "Mavzu"),
+              ),
+              TextField(
+                controller: textController,
+                decoration: InputDecoration(labelText: "Matn"),
+                maxLines: 10,
+              ),
+              TextField(
+                controller: dateController,
+                decoration: InputDecoration(labelText: "Sana (YYYY-MM-DD)"),
+                keyboardType: TextInputType.datetime,
+              ),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text("Bekor qilish"),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              requestHelper.putWithAuth(
+                '/api/v1/lectures/${lecture['id'].toString()}',
+                {
+                  "lecturer": lecturerController.text,
+                  "number": int.tryParse(numberController.text) ?? 0,
+                  "topic": topicController.text,
+                  "text": textController.text,
+                  "date": dateController.text,
+                },
+              ).then((response) {
+                if (response != null && response['id'] != null) {
+                  setState(() {});
+                  Navigator.pop(context);
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                        content: Text("Ma'ruza muvaffaqiyatli tahrirlandi!")),
+                  );
+                } else {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                        content: Text("Xato: Javob noto‘g‘ri formatda keldi")),
+                  );
+                }
+              }).catchError((error) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text("Xatolik yuz berdi: $error")),
+                );
+              });
+            },
+            child: Text("Saqlash"),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showDeleteConfirmationDialog(String id) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text("O'chirishni tasdiqlash"),
+        content: Text("Ushbu ma'ruzani o'chirishni istaysizmi?"),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text("Bekor qilish"),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              requestHelper
+                  .deleteWithAuth('/api/v1/lectures/$id')
+                  .then((value) {
+                setState(() {});
+                Navigator.pop(context);
+              });
+            },
+            child: Text("O'chirish"),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final user = cache.getString('first_name');
@@ -83,13 +206,7 @@ class _MainPageState extends State<MainPage> {
               router.go(Routes.loginPage);
             },
           ),
-          SizedBox(width: 20),
-          ElevatedButton(
-            onPressed: () {
-              router.push(Routes.themeAddPage);
-            },
-            child: Text('Yaratish'),
-          ),
+          SizedBox(width: 10),
         ],
       ),
       body: FutureBuilder<Map<String, List<Map<String, dynamic>>>>(
@@ -108,107 +225,188 @@ class _MainPageState extends State<MainPage> {
             child: Padding(
               padding: const EdgeInsets.all(20.0),
               child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: data.entries.map((entry) {
-                  return Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        entry.key,
-                        style: AppStyle.fontStyle.copyWith(
-                          fontSize: 20,
-                          fontWeight: FontWeight.bold,
-                        ),
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  GestureDetector(
+                    onTap: () async {
+                      final result = await router.push(Routes.themeAddPage);
+                      if (result == 'added') {
+                        setState(() {
+                          getLectures();
+                        });
+                      }
+                    },
+                    child: Container(
+                      padding:
+                          EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                      width: 155,
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(8),
                       ),
-                      SizedBox(height: 10),
-                      if (entry.value.isEmpty)
-                        Text(
-                          "Ma'lumot yo'q",
-                          style: AppStyle.fontStyle.copyWith(
-                            fontSize: 14,
-                            fontStyle: FontStyle.italic,
-                            color: Colors.grey,
+                      child: Row(
+                        children: [
+                          Icon(Icons.add),
+                          Text('Mavzu qo‘shish', style: AppStyle.fontStyle),
+                        ],
+                      ),
+                    ),
+                  ),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: data.entries.map((entry) {
+                      return Column(
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: [
+                          Text(
+                            entry.key,
+                            style: AppStyle.fontStyle.copyWith(
+                              fontSize: 20,
+                              fontWeight: FontWeight.bold,
+                            ),
                           ),
-                        )
-                      else
-                        Wrap(
-                          spacing: 20,
-                          runSpacing: 20,
-                          children: entry.value.map((lecture) {
-                            return GestureDetector(
-                              onTap: () {
-                                // Navigate to QuizPage and pass the lecture ID
-                                router.push(
-                                  Routes.quizPage,
-                                  extra: lecture['id'], // Pass the lecture ID
-                                );
-                              },
-                              child: Container(
-                                width: 250,
-                                height: 150,
-                                padding: EdgeInsets.all(10),
-                                decoration: BoxDecoration(
-                                  borderRadius: BorderRadius.circular(10),
-                                  color: Colors.blue.shade100,
-                                  boxShadow: [
-                                    BoxShadow(
-                                      color: Colors.black.withOpacity(0.2),
-                                      spreadRadius: 2,
-                                      blurRadius: 4,
-                                      offset: Offset(0, 3),
-                                    ),
-                                  ],
-                                ),
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      lecture['lecturer'],
-                                      style: AppStyle.fontStyle.copyWith(
-                                        fontSize: 16,
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                    ),
-                                    SizedBox(height: 5),
-                                    Text(
-                                      "raqami: ${lecture['number']}",
-                                      style: AppStyle.fontStyle.copyWith(
-                                        fontSize: 14,
-                                      ),
-                                    ),
-                                    Text(
-                                      "topic: ${lecture['topic']}",
-                                      style: AppStyle.fontStyle.copyWith(
-                                        fontSize: 14,
-                                      ),
-                                    ),
-                                    Text(
-                                      "Text: ${lecture['text']}",
-                                      style: AppStyle.fontStyle.copyWith(
-                                        fontSize: 14,
-                                      ),
-                                    ),
-                                    Spacer(),
-                                    Align(
-                                      alignment: Alignment.bottomRight,
-                                      child: Text(
-                                        "📅 ${lecture['date'].substring(0, 10)}",
-                                        style: AppStyle.fontStyle.copyWith(
-                                          fontSize: 12,
-                                          color: Colors.grey.shade700,
-                                        ),
-                                      ),
-                                    ),
-                                  ],
-                                ),
+                          SizedBox(height: 10),
+                          if (entry.value.isEmpty)
+                            Text(
+                              "Ma'lumot yo'q",
+                              style: AppStyle.fontStyle.copyWith(
+                                fontSize: 14,
+                                fontStyle: FontStyle.italic,
+                                color: Colors.grey,
                               ),
-                            );
-                          }).toList(),
-                        ),
-                      SizedBox(height: 20),
-                    ],
-                  );
-                }).toList(),
+                            )
+                          else
+                            Center(
+                              child: Wrap(
+                                spacing: 20,
+                                runSpacing: 20,
+                                children: entry.value.map((lecture) {
+                                  return GestureDetector(
+                                    onTap: () {
+                                      router.push(
+                                        Routes.quizPage,
+                                        extra: lecture['id'],
+                                      );
+                                    },
+                                    child: Container(
+                                      width: 320,
+                                      height: 100,
+                                      padding: EdgeInsets.symmetric(
+                                          horizontal: 15, vertical: 10),
+                                      decoration: BoxDecoration(
+                                        borderRadius: BorderRadius.circular(12),
+                                        color: Colors.white,
+                                        boxShadow: [
+                                          BoxShadow(
+                                            color:
+                                                Colors.black.withOpacity(0.1),
+                                            spreadRadius: 2,
+                                            blurRadius: 6,
+                                            offset: Offset(0, 3),
+                                          ),
+                                        ],
+                                      ),
+                                      child: Row(
+                                        children: [
+                                          Container(
+                                            width: 40,
+                                            height: 40,
+                                            decoration: BoxDecoration(
+                                              color: Colors.grey.shade200,
+                                              shape: BoxShape.circle,
+                                            ),
+                                            child: Center(
+                                              child: Text(
+                                                lecture['number'].toString(),
+                                                style:
+                                                    AppStyle.fontStyle.copyWith(
+                                                  fontSize: 16,
+                                                  fontWeight: FontWeight.bold,
+                                                ),
+                                              ),
+                                            ),
+                                          ),
+                                          SizedBox(width: 10),
+                                          Expanded(
+                                            child: Column(
+                                              crossAxisAlignment:
+                                                  CrossAxisAlignment.start,
+                                              mainAxisAlignment:
+                                                  MainAxisAlignment.center,
+                                              children: [
+                                                Text(
+                                                  lecture['topic'],
+                                                  style: AppStyle.fontStyle
+                                                      .copyWith(
+                                                    fontSize: 14,
+                                                    fontWeight: FontWeight.bold,
+                                                  ),
+                                                  maxLines: 1,
+                                                  overflow:
+                                                      TextOverflow.ellipsis,
+                                                ),
+                                                SizedBox(height: 4),
+                                                Text(
+                                                  lecture['lecturer'],
+                                                  style: AppStyle.fontStyle
+                                                      .copyWith(
+                                                    fontSize: 12,
+                                                    color: Colors.grey.shade600,
+                                                  ),
+                                                  maxLines: 1,
+                                                  overflow:
+                                                      TextOverflow.ellipsis,
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                          Column(
+                                            mainAxisAlignment:
+                                                MainAxisAlignment.spaceBetween,
+                                            children: [
+                                              Text(
+                                                lecture['date']
+                                                    .substring(0, 10),
+                                                style:
+                                                    AppStyle.fontStyle.copyWith(
+                                                  fontSize: 12,
+                                                  color: Colors.grey.shade700,
+                                                ),
+                                              ),
+                                              Row(
+                                                children: [
+                                                  IconButton(
+                                                    icon: SvgPicture.asset(
+                                                        'assets/icons/edit.svg'),
+                                                    onPressed: () =>
+                                                        _showEditDialog(
+                                                            lecture),
+                                                  ),
+                                                  IconButton(
+                                                    icon: SvgPicture.asset(
+                                                        'assets/icons/delete.svg'),
+                                                    onPressed: () =>
+                                                        _showDeleteConfirmationDialog(
+                                                            lecture['id']
+                                                                .toString()),
+                                                  ),
+                                                ],
+                                              ),
+                                            ],
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  );
+                                }).toList(),
+                              ),
+                            ),
+                          SizedBox(height: 20),
+                        ],
+                      );
+                    }).toList(),
+                  ),
+                ],
               ),
             ),
           );

@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
-import 'dart:convert';
-
+import 'package:go_router/go_router.dart';
 import 'package:profilaktika/common/helpers/request_helper.dart';
 
 class ThemeAddPage extends StatefulWidget {
@@ -33,7 +31,6 @@ class _ThemeAddPageState extends State<ThemeAddPage> {
     }
   }
 
-  // Method to submit form data
   Future<void> _submitForm() async {
     if (_lecturerController.text.isEmpty ||
         _numberController.text.isEmpty ||
@@ -150,9 +147,15 @@ class _ThemeAddPageState extends State<ThemeAddPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text("Create Theme")),
+      appBar: AppBar(
+          leading: IconButton(
+              onPressed: () {
+                context.pop('added');
+              },
+              icon: Icon(Icons.arrow_back)),
+          title: Text("Mavzu qo'shish")),
       body: Padding(
-        padding: const EdgeInsets.all(16.0),
+        padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 200),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -182,9 +185,10 @@ class _ThemeAddPageState extends State<ThemeAddPage> {
                 onPressed: _submitForm,
                 child: const Text('Yakunlash'),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.green[600],
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 32, vertical: 12),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  side: BorderSide(color: Colors.grey.shade300),
                 ),
               ),
             ),

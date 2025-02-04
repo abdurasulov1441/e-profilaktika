@@ -380,7 +380,7 @@ final class RequestHelper {
       throw UnauthorizedException();
     }
 
-    final url = 'http://10.100.26.2:5000/api/auth/refresh-token';
+    final url = 'http://10.100.26.3:4000/api/v1/auth/refresh';
 
     final headers = {
       'Content-Type': 'application/json',
