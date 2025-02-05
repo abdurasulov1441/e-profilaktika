@@ -19,6 +19,7 @@ String _initialLocation() {
   final userToken = cache.getString("access_token");
 
   if (userToken != null) {
+    
     return Routes.mainPage;
   } else {
     return Routes.loginPage;

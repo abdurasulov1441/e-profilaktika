@@ -1,3 +1,4 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:profilaktika/app/router.dart';
 import 'package:profilaktika/app/theme.dart';
 import 'package:profilaktika/common/helpers/request_helper.dart';
@@ -14,9 +15,9 @@ class LoginScreen extends StatefulWidget {
 }
 
 class _LoginScreenState extends State<LoginScreen> {
-  bool isHiddenPassword = true;
-  TextEditingController emailController = TextEditingController();
-  TextEditingController passwordController = TextEditingController();
+  TextEditingController jetonController = TextEditingController();
+  TextEditingController passportNumberController = TextEditingController();
+  TextEditingController birthDateController = TextEditingController();
   final formKey = GlobalKey<FormState>();
 
   @override
@@ -24,10 +25,33 @@ class _LoginScreenState extends State<LoginScreen> {
     super.initState();
   }
 
-  void togglePasswordView() {
-    setState(() {
-      isHiddenPassword = !isHiddenPassword;
-    });
+  void formatPassportInput(String value) {
+    String formatted = value.replaceAll(RegExp(r'[^A-Za-z0-9]'), '');
+    if (formatted.length >= 2) {
+      formatted = formatted.substring(0, 2).toUpperCase() +
+          (formatted.length > 2 ? ' ' + formatted.substring(2) : '');
+    }
+    passportNumberController.value = TextEditingValue(
+      text: formatted,
+      selection: TextSelection.collapsed(offset: formatted.length),
+    );
+  }
+
+  Future<void> pickDate() async {
+    DateTime? pickedDate = await showDatePicker(
+      context: context,
+      initialDate: DateTime.now(),
+      firstDate: DateTime(1900),
+      lastDate: DateTime.now(),
+    );
+
+    if (pickedDate != null) {
+      String formattedDate =
+          DateFormat('yyyy-MM-dd').format(pickedDate); // To'g'ri format
+      setState(() {
+        birthDateController.text = formattedDate; // Tanlangan sanani saqlash
+      });
+    }
   }
 
   Future<void> login() async {
@@ -38,8 +62,9 @@ class _LoginScreenState extends State<LoginScreen> {
       final response = await requestHelper.post(
         '/api/v1/auth/login',
         {
-          'username': emailController.text.trim(),
-          'password': passwordController.text.trim(),
+          'id_number': jetonController.text.trim(),
+          'passport_number': passportNumberController.text.replaceAll(' ', ''),
+          'birthdate': birthDateController.text.trim(),
         },
       );
 
@@ -52,25 +77,6 @@ class _LoginScreenState extends State<LoginScreen> {
         cache.setString('last_name', response['user']['lastname']);
         cache.setString('surname', response['user']['surname'] ?? '');
         cache.setString('photo', response['user']['photo']);
-
-        cache.setInt('structure_id', response['user']['structure']['id']);
-        cache.setString('structure_oz', response['user']['structure']['oz']);
-        cache.setString('structure_ru', response['user']['structure']['ru']);
-        cache.setString('structure_uz', response['user']['structure']['uz']);
-
-        cache.setInt('role_id', response['user']['role']['id']);
-        cache.setString('role_oz', response['user']['role']['oz']);
-        cache.setString('role_ru', response['user']['role']['ru']);
-        cache.setString('role_uz', response['user']['role']['uz']);
-        cache.setString('role_name', response['user']['role_name']);
-
-        cache.setString('rank_oz', response['user']['rank']['oz']);
-        cache.setString('rank_ru', response['user']['rank']['ru']);
-        cache.setString('rank_uz', response['user']['rank']['uz']);
-
-        cache.setString('position_oz', response['user']['position']['oz']);
-        cache.setString('position_ru', response['user']['position']['ru']);
-        cache.setString('position_uz', response['user']['position']['uz']);
 
         router.go(Routes.mainPage);
       } else {
@@ -158,55 +164,40 @@ class _LoginScreenState extends State<LoginScreen> {
                   child: Column(
                     children: [
                       TextFormField(
-                        controller: emailController,
+                        controller: jetonController,
                         decoration: InputDecoration(
-                          // hoverColor: themeProvider.getColor('hoverColor'),
-                          filled: true,
-                          // fillColor: themeProvider.getColor('foreground'),
-                          hintText: 'Login',
-                          // hintStyle: themeProvider.getTextStyle(),
+                          hintText: 'Jeton raqami',
                           border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(15),
-                            borderSide: BorderSide.none,
-                          ),
+                              borderRadius: BorderRadius.circular(15)),
                         ),
-                        validator: (value) {
-                          if (value == null || value.isEmpty) {
-                            return 'Loginni kiriting';
-                          }
-                          return null;
-                        },
+                        validator: (value) =>
+                            value!.isEmpty ? 'Loginni kiriting' : null,
                       ),
                       const SizedBox(height: 20),
                       TextFormField(
-                        controller: passwordController,
-                        obscureText: isHiddenPassword,
+                        controller: passportNumberController,
+                        onChanged: formatPassportInput,
                         decoration: InputDecoration(
-                          // hoverColor: themeProvider.getColor('hoverColor'),
-                          filled: true,
-                          // fillColor: themeProvider.getColor('foreground'),
-                          hintText: 'Parol',
-                          // hintStyle: themeProvider.getTextStyle(),
+                          hintText: 'Passport seriya va raqami',
                           border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(15),
-                            borderSide: BorderSide.none,
-                          ),
-                          suffixIcon: IconButton(
-                            icon: Icon(
-                              isHiddenPassword
-                                  ? Icons.visibility_off
-                                  : Icons.visibility,
-                              // color: themeProvider.getColor('icon'),
-                            ),
-                            onPressed: togglePasswordView,
-                          ),
+                              borderRadius: BorderRadius.circular(15)),
                         ),
-                        validator: (value) {
-                          if (value == null || value.isEmpty) {
-                            return 'Parolni kiriting';
-                          }
-                          return null;
-                        },
+                        validator: (value) =>
+                            value!.isEmpty ? 'Passportni kiriting' : null,
+                      ),
+                      const SizedBox(height: 20),
+                      TextFormField(
+                        controller: birthDateController,
+                        readOnly: true,
+                        onTap: pickDate,
+                        decoration: InputDecoration(
+                          hintText: 'Tug‘ilgan kun',
+                          suffixIcon: const Icon(Icons.calendar_today),
+                          border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(15)),
+                        ),
+                        validator: (value) =>
+                            value!.isEmpty ? 'Tug‘ilgan kunni kiriting' : null,
                       ),
                       const SizedBox(height: 20),
                       ElevatedButton(

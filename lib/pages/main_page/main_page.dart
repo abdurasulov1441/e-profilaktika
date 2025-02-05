@@ -247,24 +247,24 @@ class _MainPageState extends State<MainPage> {
             SizedBox(width: 20),
             Text('E-Profilaktika'),
             Spacer(),
-            Text(structure!),
+            Text(structure?.toUpperCase() ?? ''),
             Spacer(),
             Text('Salom, $user $lastname'),
             SizedBox(
               width: 10,
             ),
-            CircleAvatar(
-              radius: 20,
-              backgroundColor: Colors.grey.shade200,
-              child: ClipOval(
-                child: Image.network(
-                  '${Constants.imageUrl}${cache.getString('photo')}',
-                  fit: BoxFit.cover,
-                  width: 40,
-                  height: 40,
-                ),
-              ),
-            ),
+            // CircleAvatar(
+            //   radius: 20,
+            //   backgroundColor: Colors.grey.shade200,
+            //   child: ClipOval(
+            //     child: Image.network(
+            //       '${Constants.imageUrl}${cache.getString('photo')}',
+            //       fit: BoxFit.cover,
+            //       width: 40,
+            //       height: 40,
+            //     ),
+            //   ),
+            // ),
           ],
         ),
         actions: [
