@@ -60,7 +60,7 @@ class _QuizzAddPageState extends State<QuizzAddPage> {
           "answers": question["answers"]
         };
 
-        await requestHelper.postWithAuth('/api/v1/questions/', body);
+        await requestHelper.postWithAuth('/api/v1/questions/', body, log: true);
       }
 
       ScaffoldMessenger.of(context).showSnackBar(
@@ -182,6 +182,7 @@ class _QuestionWidgetState extends State<QuestionWidget> {
   final TextEditingController _descriptionController = TextEditingController();
   final List<TextEditingController> _answerControllers =
       List.generate(4, (_) => TextEditingController());
+  final List<bool> _isCorrect = [false, false, false, false];
 
   @override
   void dispose() {
@@ -197,13 +198,20 @@ class _QuestionWidgetState extends State<QuestionWidget> {
     widget.onUpdate({
       "question_text": _questionController.text,
       "description": _descriptionController.text,
-      "answers": [
-        {"text": _answerControllers[0].text, "is_correct": false},
-        {"text": _answerControllers[1].text, "is_correct": false},
-        {"text": _answerControllers[2].text, "is_correct": false},
-        {"text": _answerControllers[3].text, "is_correct": true},
-      ]
+      "answers": List.generate(4, (index) {
+        return {
+          "text": _answerControllers[index].text,
+          "is_correct": _isCorrect[index],
+        };
+      }),
     });
+  }
+
+  void _updateIsCorrect(int index, bool value) {
+    setState(() {
+      _isCorrect[index] = value;
+    });
+    _notifyParent();
   }
 
   @override
@@ -232,30 +240,29 @@ class _QuestionWidgetState extends State<QuestionWidget> {
               SizedBox(
                 height: 40,
                 child: ElevatedButton(
-                    style: ElevatedButton.styleFrom(
-                      side: BorderSide(color: Colors.grey[300]!, width: 1),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8),
-                      ),
+                  style: ElevatedButton.styleFrom(
+                    side: BorderSide(color: Colors.grey[300]!, width: 1),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
                     ),
-                    onPressed: widget.onRemove,
-                    child: Row(
-                      children: [
-                        SvgPicture.asset(
-                          'assets/icons/delete.svg',
-                          width: 30,
-                          height: 30,
-                        ),
-                        SizedBox(
-                          width: 10,
-                        ),
-                        Text('O\'chirish',
-                            style: AppStyle.fontStyle.copyWith(
-                                color: Colors.red[900]!,
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold)),
-                      ],
-                    )),
+                  ),
+                  onPressed: widget.onRemove,
+                  child: Row(
+                    children: [
+                      SvgPicture.asset(
+                        'assets/icons/delete.svg',
+                        width: 30,
+                        height: 30,
+                      ),
+                      const SizedBox(width: 10),
+                      Text('O\'chirish',
+                          style: AppStyle.fontStyle.copyWith(
+                              color: Colors.red[900]!,
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold)),
+                    ],
+                  ),
+                ),
               ),
             ],
           ),
@@ -284,7 +291,7 @@ class _QuestionWidgetState extends State<QuestionWidget> {
             onChanged: (_) => _notifyParent(),
             decoration: InputDecoration(
               labelStyle: AppStyle.fontStyle,
-              labelText: 'Savol izohi',
+              labelText: 'To\'gri javob izohi',
               enabledBorder: OutlineInputBorder(
                 borderSide: BorderSide(color: Colors.grey[300]!),
                 borderRadius: BorderRadius.circular(8),
@@ -297,25 +304,40 @@ class _QuestionWidgetState extends State<QuestionWidget> {
           ),
           const SizedBox(height: 8),
           ...List.generate(4, (index) {
-            return Padding(
-              padding: const EdgeInsets.only(bottom: 8.0),
-              child: TextField(
-                style: AppStyle.fontStyle,
-                controller: _answerControllers[index],
-                onChanged: (_) => _notifyParent(),
-                decoration: InputDecoration(
-                  labelStyle: AppStyle.fontStyle,
-                  labelText: index == 3 ? 'To’g’ri javob' : 'Noto’g’ri javob',
-                  enabledBorder: OutlineInputBorder(
-                    borderSide: BorderSide(color: Colors.grey[300]!),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  border: OutlineInputBorder(
-                    borderSide: BorderSide(color: Colors.grey[300]!),
-                    borderRadius: BorderRadius.circular(8),
+            final labels = ['A', 'B', 'C', 'D']; // Массив с буквами
+            return Row(
+              children: [
+                Expanded(
+                  child: Container(
+                    padding: const EdgeInsets.only(top: 10),
+                    child: TextField(
+                      style: AppStyle.fontStyle,
+                      controller: _answerControllers[index],
+                      onChanged: (_) => _notifyParent(),
+                      decoration: InputDecoration(
+                        labelStyle: AppStyle.fontStyle,
+                        labelText:
+                            'Variant ${labels[index]}', // Используем буквы вместо номеров
+                        enabledBorder: OutlineInputBorder(
+                          borderSide: BorderSide(color: Colors.grey[300]!),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        border: OutlineInputBorder(
+                          borderSide: BorderSide(color: Colors.grey[300]!),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                      ),
+                    ),
                   ),
                 ),
-              ),
+                const SizedBox(width: 10),
+                Checkbox(
+                  value: _isCorrect[index],
+                  onChanged: (value) {
+                    _updateIsCorrect(index, value ?? false);
+                  },
+                ),
+              ],
             );
           }),
         ],

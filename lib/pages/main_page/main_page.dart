@@ -20,9 +20,6 @@ class _MainPageState extends State<MainPage> {
         await requestHelper.getWithAuth('/api/v1/lectures/', log: true);
 
     final List<dynamic> lectures = response['data'];
-    if (response['statusCode'] != 200) {
-      router.go(Routes.loginPage);
-    }
 
     return groupLecturesByMonth(lectures);
   }

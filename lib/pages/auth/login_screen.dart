@@ -62,12 +62,15 @@ class _LoginScreenState extends State<LoginScreen> {
       final response = await requestHelper.post(
         '/api/v1/auth/login',
         {
-          'id_number': jetonController.text.trim(),
-          'passport_number': passportNumberController.text.replaceAll(' ', ''),
-          'birthdate': birthDateController.text.trim(),
+          // 'id_number': jetonController.text.trim(),
+          // 'passport_number': passportNumberController.text.replaceAll(' ', ''),
+          // 'birthdate': birthDateController.text.trim(),
+          'id_number': '008937',
+          'passport_number': 'AB1234567',
+          'birthdate': '1989-09-22',
         },
+        log: true,
       );
-
       if (response['accessToken'] != null && response['refreshToken'] != null) {
         cache.setString('access_token', response['accessToken']);
         cache.setString('refresh_token', response['refreshToken']);
@@ -77,6 +80,7 @@ class _LoginScreenState extends State<LoginScreen> {
         cache.setString('last_name', response['user']['lastname']);
         cache.setString('surname', response['user']['surname'] ?? '');
         cache.setString('photo', response['user']['photo']);
+        print(response['accessToken']);
 
         router.go(Routes.mainPage);
       } else {

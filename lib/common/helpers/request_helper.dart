@@ -95,8 +95,6 @@ final class RequestHelper {
       if (response.statusCode == 401 || response.statusCode == 400) {
         print(response.data);
 
-        await refreshAccessToken();
-        router.go(Routes.loginPage);
         return getWithAuth(path);
       }
       if (log) {
@@ -113,7 +111,6 @@ final class RequestHelper {
         logMethod(jsonEncode(response.data));
       }
 
-      response.data['statusCode'] = response.statusCode;
       return response.data;
     } on DioException catch (e, s) {
       logger.d([
@@ -381,7 +378,7 @@ final class RequestHelper {
       throw UnauthorizedException();
     }
 
-    final url = 'http://10.100.26.3:4000/api/v1/auth/refresh';
+    final url = 'http://10.100.26.3:8080/api/v1/auth/refresh';
 
     final headers = {
       'Content-Type': 'application/json',
